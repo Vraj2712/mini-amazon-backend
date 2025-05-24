@@ -4,6 +4,8 @@ from app.models.product_model import product_helper
 from app.database import db
 from datetime import datetime
 from bson import ObjectId
+from fastapi import APIRouter, Query
+from typing import Optional
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -24,6 +26,36 @@ async def get_all_products():
     async for product in products_cursor:
         products.append(product_helper(product))
     return products
+
+@router.get("/search")
+async def search_products(
+    q: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None),
+    max_price: Optional[float] = Query(None),
+    in_stock: Optional[bool] = Query(None)
+):
+    query = {}
+
+    if q:
+        query["name"] = {"$regex": q, "$options": "i"}
+
+    if min_price is not None or max_price is not None:
+        query["price"] = {}
+        if min_price is not None:
+            query["price"]["$gte"] = min_price
+        if max_price is not None:
+            query["price"]["$lte"] = max_price
+
+    if in_stock is not None:
+        query["in_stock"] = in_stock
+
+    cursor = db.products.find(query)
+    results = []
+    async for product in cursor:
+        results.append(product_helper(product))
+
+    return results
+
 
 # Get a single product
 @router.get("/{product_id}", response_model=ProductResponse)
@@ -52,3 +84,4 @@ async def delete_product(product_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"message": "Product deleted successfully"}
+
