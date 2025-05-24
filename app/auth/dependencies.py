@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 from app.models.user_model import UserResponse  # Adjust path if needed
 from app.auth.utils import SECRET_KEY, ALGORITHM  # We already used these
 from app.database import db  # If you're using Motor or another DB instance
-
+from app.models.user_model import UserResponse
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -24,4 +24,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     user = await db["users"].find_one({"email": user_email})
     if user is None:
         raise credentials_exception
-    return User(**user)  # Return Pydantic model
+    return UserResponse(
+    id=str(user["_id"]),
+    name=user["name"],
+    email=user["email"],
+    created_at=user["created_at"]
+)
