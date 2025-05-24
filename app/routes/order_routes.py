@@ -5,6 +5,8 @@ from app.auth.dependencies import get_current_user
 from app.database import db
 from datetime import datetime
 from bson import ObjectId
+from app.schemas.order_schema import OrderStatusUpdate
+from app.auth.dependencies import require_admin
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -50,3 +52,18 @@ async def get_user_orders(current_user=Depends(get_current_user)):
     async for order in cursor:
         orders.append(order_helper(order))
     return orders
+
+
+@router.put("/{order_id}/status", response_model=OrderResponse)
+async def update_order_status(order_id: str, update: OrderStatusUpdate, admin_user=Depends(require_admin)):
+    order = await db.orders.find_one({"_id": ObjectId(order_id)})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    await db.orders.update_one(
+        {"_id": ObjectId(order_id)},
+        {"$set": {"status": update.status}}
+    )
+
+    updated_order = await db.orders.find_one({"_id": ObjectId(order_id)})
+    return order_helper(updated_order)

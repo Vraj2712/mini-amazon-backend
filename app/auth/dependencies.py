@@ -30,3 +30,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     email=user["email"],
     created_at=user["created_at"]
 )
+
+async def require_admin(current_user=Depends(get_current_user)):
+    # Simple check: treat one hardcoded email as admin
+    if current_user.email != "admin@example.com":
+        raise HTTPException(status_code=403, detail="Admins only")
+    return current_user
