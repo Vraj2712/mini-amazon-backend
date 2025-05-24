@@ -12,7 +12,7 @@ router = APIRouter(prefix="/products", tags=["Products"])
 # Create a product
 @router.post("/", response_model=ProductResponse)
 async def create_product(product: ProductCreate):
-    product_dict = product.dict()
+    product_dict = product.model_dump()
     product_dict["created_at"] = datetime.utcnow()
     result = await db.products.insert_one(product_dict)
     new_product = await db.products.find_one({"_id": result.inserted_id})
