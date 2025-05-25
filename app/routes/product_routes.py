@@ -10,7 +10,7 @@ from typing import Optional
 router = APIRouter(prefix="/products", tags=["Products"])
 
 # Create a product
-@router.post("/", response_model=ProductResponse)
+@router.post("/", response_model=ProductResponse, status_code=201)
 async def create_product(product: ProductCreate):
     product_dict = product.model_dump()
     product_dict["created_at"] = datetime.utcnow()
