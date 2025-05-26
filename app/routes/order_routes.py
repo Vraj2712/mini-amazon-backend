@@ -60,6 +60,10 @@ async def update_order_status(order_id: str, update: OrderStatusUpdate, admin_us
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
+    VALID_STATUSES = ["pending", "shipped", "delivered", "cancelled"]
+    if update.status not in VALID_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid status value")
+
     await db.orders.update_one(
         {"_id": ObjectId(order_id)},
         {"$set": {"status": update.status}}
@@ -67,3 +71,4 @@ async def update_order_status(order_id: str, update: OrderStatusUpdate, admin_us
 
     updated_order = await db.orders.find_one({"_id": ObjectId(order_id)})
     return order_helper(updated_order)
+

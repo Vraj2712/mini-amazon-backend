@@ -3,6 +3,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 from app.main import app
 
+pytestmark = pytest.mark.asyncio(scope="function")
 # Ensure consistent use of asyncio as the event loop backend
 @pytest.fixture(scope="session")
 def anyio_backend():

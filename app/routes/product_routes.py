@@ -70,7 +70,7 @@ async def get_product(product_id: str):
 async def update_product(product_id: str, update: ProductUpdate):
     result = await db.products.update_one(
         {"_id": ObjectId(product_id)},
-        {"$set": {k: v for k, v in update.dict().items() if v is not None}}
+        {"$set": {k: v for k, v in update.model_dump().items() if v is not None}}
     )
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Product not updated")
