@@ -6,6 +6,7 @@ from datetime import datetime
 from bson import ObjectId
 from fastapi import APIRouter, Query
 from typing import Optional
+from bson.errors import InvalidId
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -60,9 +61,14 @@ async def search_products(
 # Get a single product
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_product(product_id: str):
-    product = await db.products.find_one({"_id": ObjectId(product_id)})
+    try:
+        product = await db.products.find_one({"_id": ObjectId(product_id)})
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid product ID format")
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+
     return product_helper(product)
 
 # Update a product

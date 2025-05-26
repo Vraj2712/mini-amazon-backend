@@ -12,10 +12,10 @@ class ProductCreate(ProductBase):
     pass
 
 class ProductUpdate(BaseModel):
-    name: Optional[str]
-    description: Optional[str]
-    price: Optional[float]
-    in_stock: Optional[bool]
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    in_stock: Optional[bool] = None
 
 class ProductResponse(ProductBase):
     id: str

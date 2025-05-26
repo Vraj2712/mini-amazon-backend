@@ -29,3 +29,73 @@ async def test_admin_access_denied(async_client):
 
     assert response.status_code == 403
     assert response.json()["detail"] == "Admins only"  # ✅ match the real message
+
+@pytest.mark.anyio
+async def test_signup_existing_email(async_client):
+    # First signup
+    await async_client.post("/auth/signup", json={
+        "name": "Test User",
+        "email": "duplicate@example.com",
+        "password": "pass123"
+    })
+
+    # Try signing up again with the same email
+    response = await async_client.post("/auth/signup", json={
+        "name": "Test User",
+        "email": "duplicate@example.com",
+        "password": "pass123"
+    })
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Email already registered"
+
+@pytest.mark.anyio
+async def test_login_with_wrong_password(async_client):
+    # Create user
+    await async_client.post("/auth/signup", json={
+        "name": "WrongPass User",
+        "email": "wrongpass@example.com",
+        "password": "correctpass"
+    })
+
+    # Attempt login with incorrect password
+    response = await async_client.post("/auth/login", data={
+        "username": "wrongpass@example.com",
+        "password": "wrongpass"
+    })
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid credentials"
+
+@pytest.mark.anyio
+async def test_login_with_nonexistent_email(async_client):
+    response = await async_client.post("/auth/login", data={
+        "username": "notfound@example.com",
+        "password": "irrelevant"
+    })
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid credentials"
+
+@pytest.mark.anyio
+async def test_get_current_user_valid_token(async_client):
+    # Sign up and login
+    await async_client.post("/auth/signup", json={
+        "name": "Current User",
+        "email": "currentuser@example.com",
+        "password": "mypassword"
+    })
+
+    login_resp = await async_client.post("/auth/login", data={
+        "username": "currentuser@example.com",
+        "password": "mypassword"
+    })
+    token = login_resp.json()["access_token"]
+
+    # Use token to call /auth/user
+    response = await async_client.get("/auth/user", headers={
+        "Authorization": f"Bearer {token}"
+    })
+
+    assert response.status_code == 200
+    assert response.json()["email"] == "currentuser@example.com"

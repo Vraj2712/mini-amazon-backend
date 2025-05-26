@@ -9,6 +9,10 @@ from datetime import datetime
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+@router.get("/user", response_model=UserResponse)
+async def get_current_user_route(current_user=Depends(get_current_user)):
+    return current_user
+
 @router.post("/signup", response_model=UserPublic)
 async def signup(user: UserCreate):
     user_exist = await db.users.find_one({"email": user.email})
