@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
+from pydantic import ConfigDict
 def user_helper(user) -> dict:
     return {
         "id": str(user["_id"]),
@@ -15,7 +16,7 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True  # <-- change here
+        model_config = ConfigDict(from_attributes=True)
 
     
     

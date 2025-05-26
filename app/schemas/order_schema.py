@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime
+from pydantic import ConfigDict
 
 class OrderItem(BaseModel):
     product_id: str
@@ -18,7 +19,7 @@ class OrderResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        model_config = ConfigDict(from_attributes=True)
 
 
 class OrderStatusUpdate(BaseModel):
