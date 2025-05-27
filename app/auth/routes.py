@@ -19,7 +19,7 @@ async def signup(user: UserCreate):
     if user_exist:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    user_dict = user.dict()
+    user_dict = user.model_dump()
     user_dict["hashed_password"] = hash_password(user_dict.pop("password"))  # hashed_password field
     user_dict["created_at"] = datetime.utcnow()
 

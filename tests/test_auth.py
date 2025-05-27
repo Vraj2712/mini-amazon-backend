@@ -99,3 +99,70 @@ async def test_get_current_user_valid_token(async_client):
 
     assert response.status_code == 200
     assert response.json()["email"] == "currentuser@example.com"
+
+@pytest.mark.anyio
+async def test_login_with_missing_fields(async_client):
+    response = await async_client.post("/auth/login", data={
+        "username": "user@example.com"
+        # password missing
+    })
+    assert response.status_code == 422
+    assert "detail" in response.json()
+
+@pytest.mark.anyio
+async def test_login_with_get_method_not_allowed(async_client):
+    response = await async_client.get("/auth/login")
+    assert response.status_code == 405  # Method Not Allowed
+
+@pytest.mark.anyio
+async def test_get_current_user_without_token(async_client):
+    response = await async_client.get("/auth/user")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"
+
+@pytest.mark.anyio
+async def test_get_current_user_info(async_client):
+    # Sign up
+    await async_client.post("/auth/signup", json={
+        "name": "Get User",
+        "email": "getuser@example.com",
+        "password": "password123"
+    })
+
+    # Login
+    login_resp = await async_client.post("/auth/login", data={
+        "username": "getuser@example.com",
+        "password": "password123"
+    })
+    token = login_resp.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Call /auth/user
+    resp = await async_client.get("/auth/user", headers=headers)
+    assert resp.status_code == 200
+    assert resp.json()["email"] == "getuser@example.com"
+
+@pytest.mark.anyio
+async def test_get_current_user_user_not_found(async_client):
+    await async_client.post("/auth/signup", json={
+        "name": "Ghost User",
+        "email": "ghost@example.com",
+        "password": "ghostpass"
+    })
+    login = await async_client.post("/auth/login", data={
+        "username": "ghost@example.com",
+        "password": "ghostpass"
+    })
+    token = login.json()["access_token"]
+
+    # Delete user manually
+    from app.database import db
+    await db.users.delete_one({"email": "ghost@example.com"})
+
+    response = await async_client.get("/auth/user", headers={
+        "Authorization": f"Bearer {token}"
+    })
+
+    # Updated expected status
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Could not validate credentials"

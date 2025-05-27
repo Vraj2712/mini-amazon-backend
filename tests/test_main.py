@@ -43,3 +43,8 @@ async def test_list_products(async_client):
     response = await async_client.get("/products", follow_redirects=True)
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+@pytest.mark.anyio
+async def test_root_path(async_client):
+    response = await async_client.get("/")
+    assert response.status_code in (200, 404)
